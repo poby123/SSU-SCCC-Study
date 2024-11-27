@@ -2,88 +2,72 @@
 
 #include <bits/stdc++.h>
 using namespace std;
-
 using ll = long long;
-#define MAX 9
-using pp = pair<int, int>;
-vector<pp> blanks;
+#define MAX 1000000
 
-int N;
-int G[MAX][MAX] = {0};
-bool isDone;
+const int h = ((int)ceil(log2(MAX)));
+const int treeSize = (1 << (h + 1));
 
-const int dy[] = {0, 0, 0, 1, 1, 1, 2, 2, 2};
-const int dx[] = {0, 1, 2, 0, 1, 2, 0, 1, 2};
+struct Seg
+{
+  vector<ll> tree = vector<ll>(treeSize, 0);
+  int sz = treeSize >> 1;
 
-bool isAvailable(int n, int y, int x) {
-  int sy = y / 3 * 3;
-  int sx = x / 3 * 3;
-
-  for (int i = 0; i < MAX; i++) {
-    if (G[y][i] == n) {
-      return false;
-    }
-
-    if (G[i][x] == n) {
-      return false;
-    }
-
-    if (G[sy + dy[i]][sx + dx[i]] == n) {
-      return false;
+  void update(int x, ll v)
+  {
+    x |= sz;
+    ll diff = v - tree[x];
+    tree[x] = v;
+    while (x >>= 1)
+    {
+      tree[x] = tree[x << 1] + tree[x << 1 | 1];
     }
   }
 
-  return true;
-}
-
-void solve(int i) {
-  if (i == blanks.size()) {
-    isDone = true;
-    for (int i = 0; i < MAX; i++) {
-      for (int j = 0; j < MAX; j++) {
-        cout << G[i][j];
-      }
-      cout << "\n";
+  ll query(int l, int r)
+  {
+    l |= sz, r |= sz;
+    ll ret = 0;
+    while (l <= r)
+    {
+      if (l & 1)
+        ret += tree[l++];
+      if (~r & 1)
+        ret += tree[r--];
+      l >>= 1, r >>= 1;
     }
-
-    return;
+    return ret;
   }
+} seg;
 
-  auto [y, x] = blanks[i];
-  for (int t = 1; t < 10; t++) {
-    if (isDone) {
-      return;
-    }
+int N, M, K;
 
-    if (!isAvailable(t, y, x)) {
-      continue;
-    }
-
-    G[y][x] = t;
-    solve(i + 1);
-    G[y][x] = 0;
-  }
-}
-
-int main() {
+int main()
+{
   ios::sync_with_stdio(false);
   cin.tie(nullptr);
-  blanks.reserve(80);
 
-  for (int i = 0; i < MAX; i++) {
-    string str;
-    getline(cin, str);
-
-    for (int j = 0; j < MAX; j++) {
-      G[i][j] = str[j] - '0';
-
-      if (!G[i][j]) {
-        blanks.push_back({i, j});
-      }
-    }
+  cin >> N >> M >> K;
+  for (int i = 1; i <= N; i++)
+  {
+    ll x;
+    cin >> x;
+    seg.update(i, x);
   }
 
-  solve(0);
+  for (int i = 0; i < M + K; i++)
+  {
+    ll a, b, c;
+    cin >> a >> b >> c;
+    if (a == 1)
+    {
+      seg.update(b, c);
+    }
+    else
+    {
+      cout << seg.query(b, c) << "\n";
+    }
+  }
 
   return 0;
 }
